@@ -23,52 +23,52 @@ Immediately after ActiveRecord::Base is disconnected, SkipDatabase requires any 
 Example
 -------
 
-class UserTest < ActiveSupport::TestCase
+  class UserTest < ActiveSupport::TestCase
 
-  def test_user_name_must_be_unique
+    def test_user_name_must_be_unique
   
-    user = User.new(:first => "Elwin", :last => "Ransom")
+      user = User.new(:first => "Elwin", :last => "Ransom")
     
-    # this block won't be executed unless we're skipping the database
-    skip_database do
-      User.expects(:create!).with(:first => user.first, :last => user.last)
-      user.expects(:save).returns false
-      user.errors.add(:name, "must be unique")
+      # this block won't be executed unless we're skipping the database
+      skip_database do
+        User.expects(:create!).with(:first => user.first, :last => user.last)
+        user.expects(:save).returns false
+        user.errors.add(:name, "must be unique")
+      end
+    
+      User.create!(:first => "Elwin", :last => "Ransom")
+      assert !user.save
+    
+      assert_equal user.errors.on(:name), "must be unique"
     end
-    
-    User.create!(:first => "Elwin", :last => "Ransom")
-    assert !user.save
-    
-    assert_equal user.errors.on(:name), "must be unique"
-  end
 
-  # Do not run the following tests when skipping database execution
-  with_database do
+    # Do not run the following tests when skipping database execution
+    with_database do
   
-    def test_complex_methods
-      Company.build_by_factory(:users => 3, :admin => 1)
+      def test_complex_methods
+        Company.build_by_factory(:users => 3, :admin => 1)
       
-      users = User.find_by_sql <<-SQL
-                                  select * from users
-                                  join permissions on permissions.user_id = users.id
-                                  join companies on companies.id = users.company_id
-                                  where permissions.role = 'user' and companies.active is true
-                                SQL
+        users = User.find_by_sql <<-SQL
+                                    select * from users
+                                    join permissions on permissions.user_id = users.id
+                                    join companies on companies.id = users.company_id
+                                    where permissions.role = 'user' and companies.active is true
+                                  SQL
       
-      admins = User.find_by_sql <<-SQL
-                                  select * from users
-                                  join permissions on permissions.user_id = users.id
-                                  join companies on companies.id = users.company_id
-                                  where permissions.role = 'admin' and companies.active is true
-                                SQL
+        admins = User.find_by_sql <<-SQL
+                                    select * from users
+                                    join permissions on permissions.user_id = users.id
+                                    join companies on companies.id = users.company_id
+                                    where permissions.role = 'admin' and companies.active is true
+                                  SQL
       
-      assert_equal 2, users.size
-      assert_equal 1, admins.size
+        assert_equal 2, users.size
+        assert_equal 1, admins.size
+      end
+  
     end
-  
-  end
 
-end
+  end
 
 $ ruby test/unit/user_test.rb --skip-database
 Loaded suite test/unit/user_test
